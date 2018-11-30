@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static from staticfiles %}
+{% block title %}天天生鲜 - 首页{% endblock title %}
+{% block topfiles %}
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/slide.js' %}"></script>
+{% endblock topfiles %}
+
+{# 网页主体内容块 #}
+{% block body %}
+    <div class="navbar_con">
+        <div class="navbar">
+            <h1 class="fl">全部商品分类</h1>
+            <ul class="navlist fl">
+                <li><a href="">首页</a></li>
+                <li class="interval">|</li>
+                <li><a href="">手机</a></li>
+                <li class="interval">|</li>
+                <li><a href="">抽奖</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="center_con clearfix">
+        <ul class="subnav fl">
+{#            栏目#}
+            {% for category in types %}
+                <li><a href="#model0{{ forloop.counter }}" class="{{ category.image.url }}">{{ category.name }}</a></li>
+            {% endfor %}
+        </ul>
+        <div class="slide fl">
+            <ul class="slide_pics">
+                {# 轮播图 #}
+                {% for promo in promotion %}
+                    <li><a href="{% url 'good:detail' promo.id %}"><img src="{{ promo.image.url }}" alt="幻灯片"></a></li>
+                {% endfor %}
+            </ul>
+            <div class="prev"></div>
+            <div class="next"></div>
+            <ul class="points"></ul>
+        </div>
+        <div class="adv fl">
+            {# 遍历显示首页的促销活动信息 #}
+            {% for banner in types %}
+                <a href="{{ banner.url }}"><img src="{{ banner.image.url }}"></a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% for category in types %}
+        <div class="list_model">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model0{{ forloop.counter }}">{{ category.name }}</h3>
+                <div class="subtitle fl">
+                </div>
+                <a href="{% url 'good:list' category.id 1 %}" class="goods_more fr" id="fruit_more">查看更多 ></a>
+            </div>
+
+            <div class="goods_con clearfix">
+                <div class="goods_banner fl"><img src="{{ category.image.url }}"></div>
+                <ul class="goods_list fl">
+                    {# 遍历展示type种类在首页展示的图片商品的信息 #}
+                    {% for banner in category.top %}
+                        <li>
+                            <h4><a href="{% url 'good:detail' banner.id %}">{{ banner.name }}</a></h4>
+                            <a href="{% url 'good:detail' banner.id %}"><img src="{{ banner.image.url }}"></a>
+                            <div class="prize">¥ {{ banner.price }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endfor %}
+
+
+
+
+{% endblock body %}
+
+<div class="footer">
+    <div class="foot_link">
+        <a href="#">关于我们</a>
+        <span>|</span>
+        <a href="#">联系我们</a>
+        <span>|</span>
+        <a href="#">招聘人才</a>
+        <span>|</span>
+        <a href="#">友情链接</a>
+    </div>
+    <p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
+    <p>电话：010-****888 京ICP备*******8号</p>
+</div>
+

@@ -1,0 +1,67 @@
+{% extends 'base_detail_list.html' %}
+{% block title %}天天生鲜-商品搜索结果列表{% endblock title %}
+{% block body %}
+	<div class="breadcrumb">
+		<a href="#">{{ query }}</a>
+		<span>></span>
+		<a href="#">搜索结果如下：</a>
+	</div>
+
+	<div class="main_wrap clearfix">
+        <ul class="goods_type_list clearfix">
+            {# 遍历显示搜索的商品的信息 #}
+            {% for item in page %}
+            <li>
+                <a href="{% url 'good:detail' item.object.id %}"><img src="{{ item.object.image.url }}"></a>
+                <h4><a href="{% url 'good:detail' item.object.id %}">{{ item.object.name }}</a></h4>
+                <div class="operate"  sku_id="{{ item.object.id}}">
+                    <span class="prize">￥{{ item.object.price }}</span>
+                    <span class="unit">{{ item.object.price }}/{{ item.object.unite }}</span>
+                    <a href="javascript:;" class="add_goods" title="加入购物车"></a>
+                    {% csrf_token %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="pagenation">
+                {% if page.has_previous  %}
+				<a href="/search?q={{ query }}&page={{ page.previous_page_number }}">&lt;上一页</a>
+                {% endif %}
+                {% for pindex in paginator.page_range %}
+				<a href="/search?q={{ query }}&page={{ pindex }}" {% if pindex == page.number %}class="active"{% endif %}>{{ pindex }}</a>
+				{% endfor %}
+                {% if page.has_next %}
+				<a href="/search?q={{ query }}&page={{ page.next_page_number }}">下一页&gt;</a>
+                {% endif %}
+			</div>
+	</div>
+{% endblock body %}
+{% block bottomfiles %}
+    {% load static from staticfiles %}
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script type="text/javascript">
+        $('.operate').click(function () {
+            // 获取商品id和商品数量
+            var sku_id =$(this).attr('sku_id');
+            var count = 1;
+
+            // 发起ajax post请求，访问/cart/add, 传递参数: sku_id count
+            // 组织参数
+            var csrf = $('input[name="csrfmiddlewaretoken"]').val();
+            var params = {
+                'sku_id': sku_id,
+                'count': count,
+                'csrfmiddlewaretoken': csrf
+            };
+            $.post('/cart/add/', params, function (data) {
+                if (data.res == 5) {
+                    $('#show_count').html(data.cart_count);
+                } else {
+                    // 添加失败
+                    alert(data.errmsg);
+                }
+            })
+        })
+    </script>
+{% endblock bottomfiles %}
