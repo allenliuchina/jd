@@ -98,7 +98,7 @@
             // 更新页面上被选中的商品的总数目和总价格
             update_page_info();
 
-        })
+        });
         // 购物车记录更新前端js通用的流程
         /*
             1) 获取更新的商品id和更新数目
@@ -134,8 +134,7 @@
                     // 更新成功
                     update_error = false;
                     cart_count = data.total_count;
-                }
-                else {
+                } else {
                     // 更新失败
                     update_error = true;
                     alert(data.errmsg);
@@ -167,6 +166,10 @@
             update_remote_cart_info(sku_id, count);
             // alert('2');
             // 根据更新的结果进行操作
+
+
+
+
             if (update_error == false) {
                 // 更新成功
                 // a) 重新设置页面上对应购物车中商品的数目
@@ -180,6 +183,10 @@
                     update_page_info();
                 }
                 // d) 更新页面上用户购物车中商品的总件数
+
+
+
+
                 $('.total_count').children('em').text(cart_count);
             }
         })
@@ -198,6 +205,9 @@
             update_remote_cart_info(sku_id, count);
             // alert('2');
             // 根据更新的结果进行操作
+
+
+
             if (update_error == false) {
                 // 更新成功
                 // a) 重新设置页面上对应购物车中商品的数目
@@ -211,9 +221,13 @@
                     update_page_info();
                 }
                 // d) 更新页面上用户购物车中商品的总件数
+
+
+
+
                 $('.total_count').children('em').text(cart_count);
             }
-        })
+        });
 
         // 购物车商品数目手动输入
         var pre_count = 0;
@@ -252,13 +266,13 @@
                 }
                 // d) 更新页面上用户购物车中商品的总件数
                 $('.total_count').children('em').text(cart_count);
-            }
-            else {
+            } else {
                 // 更新失败
                 // 设置购物车中对应商品的数目为用户输入之前的数目
                 $(this).val(pre_count);
+
             }
-        })
+        });
 
         // 购物车记录删除js流程
         /*
@@ -298,8 +312,7 @@
                     }
                     // c) 重新设置页面上用户购物车中商品的总件数
                     $('.total_count').children('em').text(data.total_count);
-                }
-                else {
+                } else {
                     // 删除失败
                     alert(data.errmsg);
                 }

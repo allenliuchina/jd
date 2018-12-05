@@ -140,10 +140,15 @@ def update(request):
 
     # 更新用户购物车中商品数量
     # hset(key, field, value)
+
     conn.hset(cart_key, sku_id, count)
 
+    total_count = 0
+    for v in conn.hgetall(cart_key).values():
+        total_count += int(v)
+
     # 返回应答
-    return JsonResponse({'res': 5, 'errmsg': '更新购物车记录成功'})
+    return JsonResponse({'res': 5, 'errmsg': '更新购物车记录成功', 'total_count': total_count})
 
 
 @login_required
@@ -176,4 +181,4 @@ def delete(request):
     conn.hdel(cart_key, sku_id)
 
     # 返回应答
-    return JsonResponse({'res': 3, 'errmsg': '删除购物车记录成功'})
+    return JsonResponse({'res': 3, 'errmsg': '删除购物车记录成功', 'total_count': 0})

@@ -11,7 +11,7 @@ class GoodType(models.Model):
         return self.name
 
     def top(self):
-        return Good.objects.filter(type=self).order_by('sales')[:4]
+        return Good.objects.filter(type=self).order_by('-sales')[:4]
 
 
 class Good(models.Model):
@@ -21,7 +21,7 @@ class Good(models.Model):
     price = models.FloatField(null=True)
     desc = models.TextField(null=True)
     create_time = models.DateTimeField(auto_now_add=True, null=True)
-    sales = models.IntegerField(null=True)
+    sales = models.IntegerField(null=True, default=0)
     stock = models.IntegerField(default=0)
 
     def __str__(self):

@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect, reverse
 from .models import GoodType, Good, Promotion, GoodComment
 from django_redis import get_redis_connection
+from haystack.views import SearchView
 
 
-# Create your views here.
+# from .tasks import add
+# from django.http import HttpResponse
+# def index(request):
+#     add.delay(3, 5)
+#     return HttpResponse('ok')
 
 
 def list(request, id, num):
@@ -70,9 +75,6 @@ def index(request):
     return redirect('/static/index.html')
 
 
-from haystack.views import SearchView
-
-
 class Search(SearchView):
     def extra_context(self):
         cart_count = 0
@@ -83,5 +85,5 @@ class Search(SearchView):
             cart_count = 0
             for v in goods.values():
                 cart_count += int(v)
-        context = {'cart_count':cart_count}
+        context = {'cart_count': cart_count}
         return context

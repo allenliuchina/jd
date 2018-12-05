@@ -5,10 +5,13 @@ from django_redis import get_redis_connection
 from django.http import JsonResponse
 from .models import OrderGoods, OrderInfo
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+import time
 
 
 # Create your views here.
 @login_required
+@transaction.atomic
 def before_commit(request):
     user = request.user
 
@@ -74,104 +77,292 @@ def before_commit(request):
     return render(request, 'place_order.html', context)
 
 
+# @login_required
+# def commit_order(request):
+#     user = request.user
+#     if not user.is_authenticated:
+#         return JsonResponse({'res': 0, 'errmsg': '用户未登录'})
+#
+#     # 接收参数
+#     addr_id = request.POST.get('addr_id')
+#     pay_method = request.POST.get('pay_method')
+#     sku_ids = request.POST.get('sku_ids')  # 以,分隔的字符串 3,4
+#
+#     # 参数校验
+#     if not all([addr_id, pay_method, sku_ids]):
+#         return JsonResponse({'res': 1, 'errmsg': '参数不完整'})
+#
+#     # 校验地址id
+#     try:
+#         addr = Address.objects.get(id=addr_id)
+#     except Address.DoesNotExist:
+#         return JsonResponse({'res': 2, 'errmsg': '地址信息错误'})
+#
+#     # 校验支付方式
+#     if pay_method not in OrderInfo.PAY_METHODS.keys():
+#         return JsonResponse({'res': 3, 'errmsg': '非法的支付方式'})
+#
+#     # 组织订单信息
+#     # 组织订单id: 20180316115930+用户id
+#     from datetime import datetime
+#     order_id = datetime.now().strftime("%Y%m%d%H%M%S") + str(user.id)
+#
+#     # 运费
+#     transit_price = 10
+#
+#     # 总数目和总价格
+#     total_count = 0
+#     total_price = 0
+#
+#     # todo: 向df_order_info中添加一条记录
+#     order = OrderInfo.objects.create(
+#         order_id=order_id,
+#         user=user,
+#         addr=addr,
+#         pay_method=pay_method,
+#         total_count=total_count,
+#         total_price=total_price,
+#         transit_price=transit_price
+#     )
+#
+#     # todo: 订单中包含几个商品需要向df_order_goods中添加几条记录
+#     # 获取redis链接
+#     conn = get_redis_connection('default')
+#     # 拼接key
+#     cart_key = 'cart_%d' % user.id
+#
+#     # 将sku_ids分割成一个列表
+#     sku_ids = sku_ids.split(',')  # [3,4]
+#
+#     # 遍历sku_ids，向df_order_goods中添加记录
+#     for sku_id in sku_ids:
+#         # 根据id获取商品的信息
+#         try:
+#             sku = Good.objects.get(id=sku_id)
+#         except Good.DoesNotExist:
+#             return JsonResponse({'res': 4, 'errmsg': '商品信息错误'})
+#
+#         # 从redis中获取用户要购买的商品的数量
+#         count = request.POST.get('count')
+#         if not count:
+#             count = conn.hget(cart_key, sku_id)
+#
+#         # 向df_order_goods中添加一条记录
+#         OrderGoods.objects.create(
+#             order=order,
+#             sku=sku,
+#             count=count,
+#             price=sku.price
+#         )
+#
+#         # 减少商品库存，增加销量
+#         sku.stock -= int(count)
+#         sku.sales += int(count)
+#         sku.save()
+#
+#         # 累加计算订单中商品的总数目和总价格
+#         total_count += int(count)
+#         total_price += sku.price * int(count)
+#
+#     # todo: 更新订单信息中商品的总数目和总价格
+#     order.total_count = total_count
+#     order.total_price = total_price
+#     order.save()
+#     conn.hdel(cart_key, *sku_ids)
+#     if int(pay_method) == 1:
+#         order.order_status = 2
+#         order.save()
+#
+#     # 返回应答
+#     return JsonResponse({'res': 5, 'errmsg': '订单创建成功'})
+
+
+# 悲观锁
+# @login_required
+# @transaction.atomic
+# def commit_order(request):
+#     user = request.user
+#     if not user.is_authenticated:
+#         return JsonResponse({'res': 0, 'errmsg': '用户未登录'})
+#     addr_id = request.POST.get('addr_id')
+#     pay_method = request.POST.get('pay_method')
+#     sku_ids = request.POST.get('sku_ids')
+#     if not all([addr_id, pay_method, sku_ids]):
+#         return JsonResponse({'res': 1, 'errmsg': '参数不完整'})
+#
+#     try:
+#         addr = Address.objects.get(id=addr_id)
+#     except Address.DoesNotExist:
+#         return JsonResponse({'res': 2, 'errmsg': '地址信息错误'})
+#
+#     if pay_method not in OrderInfo.PAY_METHODS.keys():
+#         return JsonResponse({'res': 3, 'errmsg': '非法的支付方式'})
+#     from datetime import datetime
+#     order_id = datetime.now().strftime("%Y%m%d%H%M%S") + str(user.id)
+#
+#     transit_price = 10
+#
+#     # 总数目和总价格
+#     total_count = 0
+#     total_price = 0
+#     # 事务记录点
+#     sid = transaction.savepoint()
+#     try:
+#         order = OrderInfo.objects.create(
+#             order_id=order_id,
+#             user=user,
+#             addr=addr,
+#             pay_method=pay_method,
+#             total_count=total_count,
+#             total_price=total_price,
+#             transit_price=transit_price
+#         )
+#
+#         conn = get_redis_connection('default')
+#         cart_key = 'cart_%d' % user.id
+#         sku_ids = sku_ids.split(',')
+#         for sku_id in sku_ids:
+#             # 根据id获取商品的信息
+#             try:
+#                 print(1)
+#                 sku = Good.objects.select_for_update().get(id=sku_id)  # 获取后加锁,在save之前，其他现线程被阻塞
+#                 print(2)
+#             except Good.DoesNotExist:
+#                 # 回滚
+#                 transaction.savepoint_rollback(sid)
+#                 return JsonResponse({'res': 4, 'errmsg': '商品信息错误'})
+#
+#             import time
+#             time.sleep(10)
+#
+#             # 从redis中获取用户要购买的商品的数量
+#             count = request.POST.get('count')
+#             if not count:
+#                 count = conn.hget(cart_key, sku_id)
+#                 if not count:
+#                     transaction.savepoint_rollback(sid)
+#                     return JsonResponse({'res': 6, 'errmsg': '下单失败'})
+#                 else:
+#                     count = int(count)
+#             if count > sku.stock:  # 检验库存
+#                 transaction.savepoint_rollback(sid)
+#                 return JsonResponse({'res': 7, 'errmsg': '商品库存不足'})
+#             # 向df_order_goods中添加一条记录
+#             OrderGoods.objects.create(
+#                 order=order,
+#                 sku=sku,
+#                 count=count,
+#                 price=sku.price
+#             )
+#
+#             # 减少商品库存，增加销量
+#             sku.stock -= int(count)
+#             sku.sales += int(count)
+#             sku.save()
+#             # 累加计算订单中商品的总数目和总价格
+#             total_count += int(count)
+#             total_price += sku.price * int(count)
+#
+#         order.total_count = total_count
+#         order.total_price = total_price
+#         if int(pay_method) == 1:
+#             order.order_status = 2
+#         order.save()
+#     except Exception as e:
+#         transaction.savepoint_rollback(sid)
+#         return JsonResponse({'res': 6, 'errmsg': '下单失败'})
+#     conn.hdel(cart_key, *sku_ids)
+#     return JsonResponse({'res': 5, 'errmsg': '订单创建成功'})
+#
+
+# 乐观锁
 @login_required
+@transaction.atomic
 def commit_order(request):
     user = request.user
     if not user.is_authenticated:
         return JsonResponse({'res': 0, 'errmsg': '用户未登录'})
-
-    # 接收参数
     addr_id = request.POST.get('addr_id')
     pay_method = request.POST.get('pay_method')
-    sku_ids = request.POST.get('sku_ids')  # 以,分隔的字符串 3,4
-
-    # 参数校验
+    sku_ids = request.POST.get('sku_ids')
+    count = request.POST.get('count')
     if not all([addr_id, pay_method, sku_ids]):
         return JsonResponse({'res': 1, 'errmsg': '参数不完整'})
 
-    # 校验地址id
     try:
         addr = Address.objects.get(id=addr_id)
     except Address.DoesNotExist:
         return JsonResponse({'res': 2, 'errmsg': '地址信息错误'})
 
-    # 校验支付方式
     if pay_method not in OrderInfo.PAY_METHODS.keys():
         return JsonResponse({'res': 3, 'errmsg': '非法的支付方式'})
-
-    # 组织订单信息
-    # 组织订单id: 20180316115930+用户id
     from datetime import datetime
     order_id = datetime.now().strftime("%Y%m%d%H%M%S") + str(user.id)
 
-    # 运费
     transit_price = 10
-
-    # 总数目和总价格
     total_count = 0
     total_price = 0
-
-    # todo: 向df_order_info中添加一条记录
-    order = OrderInfo.objects.create(
-        order_id=order_id,
-        user=user,
-        addr=addr,
-        pay_method=pay_method,
-        total_count=total_count,
-        total_price=total_price,
-        transit_price=transit_price
-    )
-
-    # todo: 订单中包含几个商品需要向df_order_goods中添加几条记录
-    # 获取redis链接
-    conn = get_redis_connection('default')
-    # 拼接key
-    cart_key = 'cart_%d' % user.id
-
-    # 将sku_ids分割成一个列表
-    sku_ids = sku_ids.split(',')  # [3,4]
-
-    # 遍历sku_ids，向df_order_goods中添加记录
-    for sku_id in sku_ids:
-        # 根据id获取商品的信息
-        try:
-            sku = Good.objects.get(id=sku_id)
-        except Good.DoesNotExist:
-            return JsonResponse({'res': 4, 'errmsg': '商品信息错误'})
-
-        # 从redis中获取用户要购买的商品的数量
-        count = request.POST.get('count')
-        if not count:
-            count = conn.hget(cart_key, sku_id)
-
-        # 向df_order_goods中添加一条记录
-        OrderGoods.objects.create(
-            order=order,
-            sku=sku,
-            count=count,
-            price=sku.price
+    # 事务记录点
+    sid = transaction.savepoint()
+    try:
+        order_info = OrderInfo.objects.create(
+            order_id=order_id,
+            user=user,
+            pay_method=pay_method,
+            addr_id=addr_id,
+            total_count=total_count,
+            total_price=total_price,
+            transit_price=transit_price,
         )
+        conn = get_redis_connection('default')
+        cart_key = 'cart_%d' % user.id
+        sku_ids = sku_ids.split(',')
+        for sku_id in sku_ids:
+            for i in range(3):
+                start = time.time()
+                try:
+                    good = Good.objects.get(id=sku_id)
+                    # if user.username == 'user':
+                    #     time.sleep(10)
 
-        # 减少商品库存，增加销量
-        sku.stock -= int(count)
-        sku.sales += int(count)
-        sku.save()
+                except Good.DoesNotExist:
+                    transaction.savepoint_rollback(sid)
+                    return JsonResponse({'res': 4, 'errmsg': '商品信息错误'})
+                if not count:
+                    count = conn.hget(cart_key, sku_id)
+                    if not count:
+                        transaction.savepoint_rollback(sid)
+                        return JsonResponse({'res': 6, 'errmsg': '下单失败'})
 
-        # 累加计算订单中商品的总数目和总价格
-        total_count += int(count)
-        total_price += sku.price * int(count)
-
-    # todo: 更新订单信息中商品的总数目和总价格
-    order.total_count = total_count
-    order.total_price = total_price
-    order.save()
+                count = int(count)
+                if good.stock < count:
+                    transaction.savepoint_rollback(sid)
+                    return JsonResponse({'res': 7, 'errmsg': '商品库存不足'})
+                rep = Good.objects.filter(id=sku_id, stock=good.stock).update(stock=good.stock - count,
+                                                                              sales=good.sales + count)  # 确保没有别的线程修改过,rep返回修改的行数
+                if rep == 0:
+                    if i == 2:
+                        transaction.savepoint_rollback(sid)
+                        return JsonResponse({'res': 6, 'errmsg': '下单失败'})
+                    else:
+                        continue
+                OrderGoods.objects.create(
+                    order=order_info,
+                    sku=good,
+                    count=count,
+                    price=good.price
+                )
+                total_count += count
+                total_price += total_count * good.price
+                break
+        order_info.total_count = total_count
+        order_info.total_price = total_price + transit_price
+        order_info.save()
+    except Exception as e:
+        transaction.savepoint_rollback(sid)
+        return JsonResponse({'res': 6, 'errmsg': '下单失败'})
     conn.hdel(cart_key, *sku_ids)
-    if int(pay_method) == 1:
-        order.order_status = 2
-        order.save()
-        return JsonResponse({'res': 6, 'errmsg': '订单创建成功'})
-    # 返回应答
-    return JsonResponse({'res': 5, 'errmsg': '订单创建成功'})
+    return JsonResponse({'res': 5, 'errmsg': '下单成功'})
 
 
 @login_required

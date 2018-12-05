@@ -6,11 +6,11 @@ from good.models import Good
 from .models import Address
 from order.models import OrderInfo, OrderGoods
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
 from django.conf import settings
 from itsdangerous import TimedJSONWebSignatureSerializer
 from django.http import HttpResponse
 from django.contrib import messages
+from .tasks import send
 
 
 # Create your views here.
@@ -42,7 +42,11 @@ def login(request):
         return response
     response = redirect(reverse('user:login'))
     # response.set_cookie('errmsg', '用户名或者密码错误'.encode().decode('latin-1'))  # cookie中设置不了中文
-    messages.add_message(request, messages.ERROR, '用户名或者密码错误')
+    user = User.objects.filter(username=username).first()
+    if not user.is_active:
+        messages.add_message(request, messages.ERROR, '用户未激活，请先激活')
+    else:
+        messages.add_message(request, messages.ERROR, '用户名或者密码错误')
     return response
 
 
@@ -52,26 +56,18 @@ def register(request):
     username = request.POST.get('username')
     password = request.POST.get('pwd')
     email = request.POST.get('email')
+    if User.objects.filter(username=username).first():
+        return render(request, 'register.html', {'errmsg': '用户名已被使用'})
     user = User.objects.create_user(username, email, password)
     if user:
         user.is_active = False
         user.save()
-        # 激活邮件
-        jws = TimedJSONWebSignatureSerializer(settings.SECRET_KEY, expires_in=60 * 60)
-        token = jws.dumps(user.id)  # token 可以被解密，不要存储敏感信息
-
-        token = token.decode()
-        subject = '天天生鲜欢迎信息'
-        message = ''
-        sender = settings.EMAIL_FROM
-        receiver = ['772075034@qq.com']
-        html_message = """
-                    <h1>%s, 欢迎您成为天天生鲜注册会员</h1>
-                    请点击一下链接激活您的账号(1小时之内有效)<br/>
-                    <a href="http://127.0.0.1:8000/user/active/%s">http://127.0.0.1:8000/user/active/%s</a>
-                """ % (username, token, token)
-        send_mail(subject, message, sender, receiver, html_message=html_message)
-        return redirect(reverse('goods:index'))
+        # serializer = TimedJSONWebSignatureSerializer(settings.SECRET_KEY, 3600 * 7)
+        # info = {'confirm': user.id}
+        # token = serializer.dumps(info)
+        # token = token.decode()
+        send.delay(email, username, user.id)
+        return redirect(reverse('good:index'))
 
 
 def activate(request, token):
@@ -98,7 +94,10 @@ def user(request):
     skus = []
     for sku_id in sku_ids:
         # 根据商品的id查询商品的信息
-        sku = Good.objects.get(id=sku_id)
+        try:
+            sku = Good.objects.get(id=sku_id)
+        except Good.DoesNotExist:
+            continue
         # 追加到skus列表中
         skus.append(sku)
 
@@ -112,7 +111,7 @@ def order(request, page):
     # 查询所有订单
     info_msg = 1  # 若有订单则为1
     try:
-        order_infos = OrderInfo.objects.filter(user=user).all()
+        order_infos = OrderInfo.objects.filter(user=user).order_by('user_id').all()
     except OrderInfo.DoesNotExist:
         info_msg = 0
 
@@ -206,7 +205,3 @@ def address(request):
                       user=user)
     address.save()
     return redirect(reverse('user:address'))
-
-
-def test(request):
-    pass

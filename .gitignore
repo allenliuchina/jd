@@ -104,5 +104,7 @@ venv.bak/
 .mypy_cache/
 image
 .idea
+whoosh_index
+static/index.html
 
 

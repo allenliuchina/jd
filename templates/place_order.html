@@ -98,22 +98,12 @@
             };
             {% if fast %}
                 var count = {{ skus.0.count }};
-                params['count']=count;
+                params['count'] = count;
             {% endif %}
             // 发起ajax post请求，访问/order/commit
             // 传递参数：addr_id pay_method sku_ids
             $.post('/order/commit/', params, function (data) {
-                if (data.res == 6) {
-                    $('.popup_con').fadeIn('fast', function () {
-
-                        setTimeout(function () {
-                            $('.popup_con').fadeOut('fast', function () {
-                                window.location.href = "{% url 'user:order' 1 %}";
-                            });
-                        }, 500)
-
-                    });
-                } else if (data.res == 5) {
+                if (data.res == 5) {
                     // alert('订单创建成功');
                     localStorage.setItem('order_finish', 2);
 

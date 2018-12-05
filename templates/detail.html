@@ -61,32 +61,50 @@
                 </ul>
             </div>
         </div>
-
         <div class="r_wrap fr clearfix">
             <ul class="detail_tab clearfix">
-                <li>商品介绍</li>
-                <li class="active">评论</li>
+                <li class="active">商品介绍</li>
+                <li>评论</li>
             </ul>
-            <div class="tab_content">
-                <dl>
-                    {% for order_sku in comments %}
-                        <dt>评论时间:{{ order_sku.create_time }}&nbsp;&nbsp;用户名:{{ order_sku.user.username }}</dt>
-                        <dd>评论内容:{{ order_sku.comment }}</dd>
-                    {% empty %}
-                        <dd>暂无商品评论</dd>
-                    {% endfor %}
-                </dl>
+            <div class="aaa">
+                <div class="tab_content">
+                    <dl>
+                        <dt>商品详情：</dt>
+                        <dd>{{ sku.desc|safe }} </dd>
+                    </dl>
+                </div>
+                <div class="tab_content" style="display: none;">
+                    <dl>
+                        {% for order_sku in order_skus %}
+                            <dt>评论时间:{{ order_sku.update_time }}&nbsp;&nbsp;用户名:{{ order_sku.order.user.username }}</dt>
+                            <dd>评论内容:{{ order_sku.comment }}</dd>
+                        {% empty %}
+                            <dd>暂无商品评论</dd>
+                        {% endfor %}
+                    </dl>
+                </div>
             </div>
-
-            <div class="tab_content" style="display: none">
-                <dl>
-                    <dt>商品详情：</dt>
-                    <dd>{{ sku.desc }} </dd>
-                </dl>
-            </div>
-
         </div>
     </div>
+    <script>
+        var eItemList = document.querySelectorAll(".detail_tab li");
+        var eContentList = document.querySelectorAll(".aaa div");
+        //给元素编号
+        for (var i = 0; i < eItemList.length; i++) {
+            eItemList[i].index = i;  //index是自定义属性，用来保存编号
+            eItemList[i].onclick = function () {
+                for (var i = 0; i < eContentList.length; i++) {
+                    eContentList[i].style.display = "none";        //先将内容全部隐藏
+                }
+                eContentList[this.index].style.display = "block";  //当鼠标触发时再显示对应的内容
+                for (var i = 0; i < eItemList.length; i++) {
+                    eItemList[i].classList.remove('active')
+                }
+                eItemList[this.index].classList.add('active')
+
+            }
+        }
+    </script>
 {% endblock main_content %}
 
 {% block bottom %}

@@ -37,10 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 搜索
     'haystack',
+    # apps
     'good.apps.GoodConfig',
     'user.apps.UserConfig',
     'order.apps.OrderConfig',
-    # 'cart.apps.CartConfig'
+    'cart.apps.CartConfig',
 
 ]
 
@@ -80,8 +81,15 @@ WSGI_APPLICATION = 'jd.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        #  配置mysql
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jd',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'USER': 'root',
+        'PASSWORD': 'root',
     }
 }
 
@@ -146,11 +154,11 @@ LOGIN_URL = '/user/login/'
 # 邮箱设置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.163.com'
-EMAIL_PORT = 25
+EMAIL_PORT = 465
 # 发送邮件的邮箱
 EMAIL_HOST_USER = '15603363510@163.com'
 # 在邮箱中设置的客户端授权密码
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_PASSWORD = os.environ.get('MAIL_PASSWORD')
 # 收件人看到的发件人
 EMAIL_FROM = '15603363510@163.com'
 
@@ -162,3 +170,12 @@ HAYSTACK_CONNECTIONS = {
 }
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# CELERY
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/1'
+
+#: Only add pickle to this list if your broker is secured
+#: from unwanted access (see userguide/security.html)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
+CELERY_TASK_SERIALIZER = 'json'
