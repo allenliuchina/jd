@@ -32,4 +32,4 @@ urlpatterns = [
 
 ]
 if not settings.DEBUG or settings.ALLOWED_HOSTS:
-    urlpatterns += re_path(r'static/(?P<path>.*)$', serve, {'document_root': os.path.join(BASE_DIR, 'static')})
+    urlpatterns += [re_path(r'static/(?P<path>.*)$', serve, {'document_root': os.path.join(BASE_DIR, 'static')}), ]
