@@ -19,6 +19,8 @@ from django.views.static import serve
 from .settings import BASE_DIR
 import os
 from good.views import Search
+from django.conf import settings
+
 urlpatterns = [
     path('', include('good.urls')),
     path('search/', Search()),
@@ -29,3 +31,5 @@ urlpatterns = [
     re_path(r'image/(?P<path>.*)$', serve, {'document_root': os.path.join(BASE_DIR, 'image')})
 
 ]
+if not settings.DEBUG or settings.ALLOWED_HOSTS:
+    urlpatterns += re_path(r'static/(?P<path>.*)$', serve, {'document_root': os.path.join(BASE_DIR, 'static')})

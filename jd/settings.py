@@ -24,7 +24,7 @@ SECRET_KEY = 'kin(@9w^$wtitb-@3jn@xr!0lj+)&t!ee933rnd^$e9uq8*y)^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -161,6 +161,8 @@ EMAIL_HOST_USER = '15603363510@163.com'
 EMAIL_HOST_PASSWORD = os.environ.get('MAIL_PASSWORD')
 # 收件人看到的发件人
 EMAIL_FROM = '15603363510@163.com'
+
+EMAIL_USE_SSL = True
 
 HAYSTACK_CONNECTIONS = {
     'default': {

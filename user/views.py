@@ -72,7 +72,8 @@ def register(request):
 
 def activate(request, token):
     jws = TimedJSONWebSignatureSerializer(settings.SECRET_KEY, expires_in=60 * 60)
-    id = jws.loads(token)
+    id_token = jws.loads(token)
+    id = id_token.get('confirm')
     if not id:
         return HttpResponse('无效的token')
     user = User.objects.get(id=id)
