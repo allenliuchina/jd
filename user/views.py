@@ -43,7 +43,7 @@ def login(request):
     response = redirect(reverse('user:login'))
     # response.set_cookie('errmsg', '用户名或者密码错误'.encode().decode('latin-1'))  # cookie中设置不了中文
     user = User.objects.filter(username=username).first()
-    if not user.is_active:
+    if user and not user.is_active:
         messages.add_message(request, messages.ERROR, '用户未激活，请先激活')
     else:
         messages.add_message(request, messages.ERROR, '用户名或者密码错误')
