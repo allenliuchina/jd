@@ -12,17 +12,18 @@ def show(request):
     conn = get_redis_connection('default')
     cart_key = 'cart_%d' % user.id
     cart_dict = conn.hgetall(cart_key)
-
     total_count = 0
     total_amount = 0
     # 遍历获取购物车中商品的详细信息
     skus = []
     for sku_id, count in cart_dict.items():
         # 根据sku_id获取商品的信息
-
-        sku = Good.objects.get(id=int(sku_id))
-
+        try:
+            sku = Good.objects.get(id=int(sku_id))
+        except Good.DoesNotExist:
+            continue
         # 计算商品的小计
+
         amount = sku.price * int(count)
 
         # 给sku对象增加属性amout和count, 分别保存用户购物车中商品的小计和数量
@@ -44,7 +45,6 @@ def show(request):
     return render(request, 'cart.html', context)
 
 
-@login_required
 def add(request):
     user = request.user
     if not user.is_authenticated:
@@ -101,57 +101,33 @@ def add(request):
     return JsonResponse({'res': 5, 'cart_count': cart_count, 'errmsg': '添加购物车记录成功'})
 
 
-@login_required
 def update(request):
     user = request.user
     if not user.is_authenticated:
         return JsonResponse({'res': 0, 'errmsg': '请先登录'})
-
-    # 接收参数
     sku_id = request.POST.get('sku_id')
     count = request.POST.get('count')
-
-    # 参数校验
     if not all([sku_id, count]):
         return JsonResponse({'res': 1, 'errmsg': '参数不完整'})
-
-    # 校验商品id requests urllib
     try:
         sku = Good.objects.get(id=sku_id)
     except Good.DoesNotExist:
         return JsonResponse({'res': 2, 'errmsg': '商品信息错误'})
-
-    # 校验商品数量count
     try:
         count = int(count)
     except Exception as e:
         return JsonResponse({'res': 3, 'errmsg': '商品数量必须为有效数字'})
-
-    # 业务处理: 购物车记录更新
-    # 获取链接
     conn = get_redis_connection('default')
-
-    # 拼接key
     cart_key = 'cart_%d' % user.id
-
-    # 校验商品的库存量
     if count > sku.stock:
         return JsonResponse({'res': 4, 'errmsg': '商品库存不足'})
-
-    # 更新用户购物车中商品数量
-    # hset(key, field, value)
-
     conn.hset(cart_key, sku_id, count)
-
     total_count = 0
     for v in conn.hgetall(cart_key).values():
         total_count += int(v)
-
-    # 返回应答
     return JsonResponse({'res': 5, 'errmsg': '更新购物车记录成功', 'total_count': total_count})
 
 
-@login_required
 def delete(request):
     user = request.user
     if not user.is_authenticated:

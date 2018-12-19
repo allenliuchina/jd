@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from user.models import Address
 # Create your models here.
 
 
@@ -37,7 +38,7 @@ class OrderInfo(models.Model):
 
     order_id = models.CharField(max_length=128, primary_key=True, verbose_name='订单id')
     user = models.ForeignKey(User, verbose_name='用户', on_delete=models.CASCADE)
-    addr = models.ForeignKey('user.Address', verbose_name='地址', on_delete=models.CASCADE)
+    addr = models.ForeignKey(Address, verbose_name='地址', on_delete=models.CASCADE)
     pay_method = models.SmallIntegerField(choices=PAY_METHOD_CHOICES, default=3, verbose_name='支付方式')
     total_count = models.IntegerField(default=1, verbose_name='商品数量')
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='商品总价')

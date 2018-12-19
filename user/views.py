@@ -91,7 +91,6 @@ def user(request):
     # 获取用户最新浏览的5个商品的id
     conn = get_redis_connection('default')
     sku_ids = conn.lrange(history_key, 0, 4)  # [1, 3, 5, 2]
-
     skus = []
     for sku_id in sku_ids:
         # 根据商品的id查询商品的信息

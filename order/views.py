@@ -7,6 +7,7 @@ from .models import OrderGoods, OrderInfo
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 import time
+from django.db.models import F
 
 
 # Create your views here.
@@ -19,7 +20,7 @@ def before_commit(request):
     sku_ids = request.POST.getlist('sku_ids')
     # 若没有商品，则直接跳回首页
     if len(sku_ids) == 0:
-        return redirect(reverse('goods:index'))
+        return redirect(reverse('good:index'))
 
     # 获取收货地址
 
@@ -36,6 +37,7 @@ def before_commit(request):
     total_amount = 0
     for sku_id in sku_ids:
         # 根据id查找商品的信息
+        sku_id = sku_id.replace('\n', '')  # ab 测试使用，vim无法去除末尾的回车符
         sku = Good.objects.get(id=sku_id)
 
         # 从redis中获取用户所要购买的商品的数量
@@ -293,7 +295,8 @@ def commit_order(request):
         addr = Address.objects.get(id=addr_id)
     except Address.DoesNotExist:
         return JsonResponse({'res': 2, 'errmsg': '地址信息错误'})
-
+    if addr.user.id != user.id:
+        return JsonResponse({'res': 2, 'errmsg': '地址错误'})
     if pay_method not in OrderInfo.PAY_METHODS.keys():
         return JsonResponse({'res': 3, 'errmsg': '非法的支付方式'})
     from datetime import datetime
@@ -309,7 +312,7 @@ def commit_order(request):
             order_id=order_id,
             user=user,
             pay_method=pay_method,
-            addr_id=addr_id,
+            addr=addr,
             total_count=total_count,
             total_price=total_price,
             transit_price=transit_price,
@@ -357,7 +360,7 @@ def commit_order(request):
                 break
         order_info.total_count = total_count
         order_info.total_price = total_price + transit_price
-        order_info.save()
+        order_info.save(update_fields=['total_count', 'total_price'])
     except Exception as e:
         transaction.savepoint_rollback(sid)
         return JsonResponse({'res': 6, 'errmsg': '下单失败'})
@@ -397,13 +400,20 @@ def pay_check(request):
 
 
 def cancel(request, id):
+    user = request.user
+    start = time.time()
     order = OrderInfo.objects.get(order_id=id)
+    if order.user.id != user.id:
+        return redirect(reverse('good:index'))
     goods = order.ordergoods_set.all()
     for good in goods:
-        good.sku.stock += good.count
-        good.sku.sales -= good.count
-        good.sku.save()
+        good.sku.stock = F('stock') + good.count
+        good.sku.sales = F('sales') - good.count
+        good.sku.save(update_fields=['stock', 'sales'])
+        # Good.objects.filter(pk=good.sku.id).update(stock=good.sku.stock + good.count, sales=good.sku.sales - good.count)
+    print('save', time.time() - start)
     order.delete()
+    print('delete;', time.time() - start)
     return redirect(reverse('user:order', args=[1]))
 
 
@@ -421,10 +431,10 @@ def fast_buy(request, id, count):
 @login_required
 def fast_commit(request, id, count):
     user = request.user
-    addrs = Address.objects.filter(user=user)
+    addr = Address.objects.filter(user=user)
     good = Good.objects.filter(pk=id).first()
     transit_price = 10
-    total_amount = good.price
+    total_amount = good.price * count
     # 实付款
     total_pay = total_amount + transit_price
     good.count = count
@@ -432,7 +442,7 @@ def fast_commit(request, id, count):
     good.unite = '部'
     # 组织模板上下文
     context = {
-        'addrs': addrs,
+        'addrs': addr,
         'skus': [good],
         'total_count': count,
         'total_amount': total_amount,

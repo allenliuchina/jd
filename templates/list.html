@@ -48,15 +48,15 @@
             </ul>
             {% csrf_token %}
             <div class="pagenation">
-                {% if skus_page.has_previous %}
-                    <a href="{% url 'good:list' type.id skus_page.previous_page_number %}?sort={{ sort }}">&lt;上一页</a>
+                {% if pages.pre %}
+                    <a href="{% url 'good:list' type.id pages.pre_number %}?sort={{ sort }}">&lt;上一页</a>
                 {% endif %}
-                {% for pindex in pages %}
-                    <a href="{% url 'good:list' type.id pindex %}?sort={{ sort }}"
-                       {% if pindex == skus_page.number %}class="active"{% endif %}>{{ pindex }}</a>
-                {% endfor %}
-                {% if skus_page.has_next %}
-                    <a href="{% url 'good:list' type.id skus_page.next_page_number %}?sort={{ sort }}">下一页&gt;</a>
+{#                {% for pindex in pages %}#}
+{#                    <a href="{% url 'good:list' type.id pindex %}?sort={{ sort }}"#}
+{#                       {% if pindex == skus_page.number %}class="active"{% endif %}>{{ pindex }}</a>#}
+{#                {% endfor %}#}
+                {% if pages.next %}
+                    <a href="{% url 'good:list' type.id pages.next_number %}?sort={{ sort }}">下一页&gt;</a>
                 {% endif %}
             </div>
         </div>

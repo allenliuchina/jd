@@ -17,8 +17,8 @@ def send(to_email, username, user_id):
     html_message = """
                         <h1>%s, 欢迎您成为天天生鲜注册会员</h1>
                         请点击以下链接激活您的账户(1个小时内有效)<br/>
-                        <a href="http://127.0.0.1:8000/user/active/%s">http://127.0.0.1:8000/user/active/%s</a>
-                    """ % (username, token, token)
+                        <a href="http://%s/user/active/%s">http://127.0.0.1:8000/user/active/%s</a>
+                    """ % (settings.SITE_URL, username, token, token)
 
     # 发送激活邮件
     # send_mail(subject=邮件标题, message=邮件正文,from_email=发件人, recipient_list=收件人列表)

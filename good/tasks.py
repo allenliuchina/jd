@@ -1,19 +1,14 @@
 import time, os
-from .models import GoodType, Promotion
+from .models import GoodType, Promotion, Good
 from jd.settings import BASE_DIR
 from jd.celery import app
 
 
 @app.task
-def add(a, b):
-    time.sleep(5)
-    return a + b
-
-
-@app.task
 def generate_index_html():
-    # time.sleep(10)
     types = GoodType.objects.all()
+    for good_type in types:
+        good_type.top = Good.objects.filter(type=good_type).order_by('-sales')[:4]
     promotion = Promotion.objects.all()
     cart_count = 0
     context = {

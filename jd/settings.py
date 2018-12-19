@@ -90,6 +90,7 @@ DATABASES = {
         'PORT': '3306',
         'USER': 'root',
         'PASSWORD': 'root',
+        'CONN_MAX_AGE': 600,
     }
 }
 
@@ -145,9 +146,9 @@ CACHES = {
 }
 
 # Django的session存储设置
-# SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 # 设置session信息存储在CACHES配置项default对应的redis中
-# SESSION_CACHE_ALIAS = "default"
+SESSION_CACHE_ALIAS = "default"
 # AUTH_USER_MODEL = 'user.User'
 LOGIN_URL = '/user/login/'
 
@@ -171,7 +172,7 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+# HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 # CELERY
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/1'
@@ -181,3 +182,6 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379/1'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
 CELERY_TASK_SERIALIZER = 'json'
+
+# 网站IP，发送邮件用
+SITE_URL = os.environ.get('SITE_URL')
