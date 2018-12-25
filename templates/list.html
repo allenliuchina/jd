@@ -40,7 +40,7 @@
                         <h4><a href="{% url 'good:detail' sku.id %}">{{ sku.name }}</a></h4>
                         <div class="operate" sku_id="{{ sku.id }}">
                             <span class="prize">￥{{ sku.price }}</span>
-                            <span class="unit">{{ sku.price }}/{{ sku.unite }}</span>
+                            <span class="unit">{{ sku.price }}/{{ sku.unit }}</span>
                             <a href="javascript:;" class="add_goods" id="add_cart" title="加入购物车"></a>
                         </div>
                     </li>

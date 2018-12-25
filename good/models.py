@@ -14,10 +14,11 @@ class GoodType(models.Model):
     #     return Good.objects.filter(type=self).order_by('-sales')[:4]
     #
 
+
 class Good(models.Model):
     name = models.CharField(max_length=50)
     type = models.ForeignKey(GoodType, on_delete=models.CASCADE, related_name='good', null=True)
-    image = models.ImageField(upload_to='image/',null=True)
+    image = models.ImageField(upload_to='image/', null=True)
     price = models.FloatField(null=True)
     desc = models.TextField(null=True)
     create_time = models.DateTimeField(auto_now_add=True, null=True)

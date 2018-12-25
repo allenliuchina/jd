@@ -398,7 +398,7 @@ def pay_order(request):
 def pay_check(request):
     pass
 
-
+@login_required
 def cancel(request, id):
     user = request.user
     start = time.time()
@@ -411,7 +411,7 @@ def cancel(request, id):
         good.sku.sales = F('sales') - good.count
         good.sku.save(update_fields=['stock', 'sales'])
         # Good.objects.filter(pk=good.sku.id).update(stock=good.sku.stock + good.count, sales=good.sku.sales - good.count)
-    print('save', time.time() - start)
+    # print('save', time.time() - start)
     order.delete()
     print('delete;', time.time() - start)
     return redirect(reverse('user:order', args=[1]))

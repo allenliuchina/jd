@@ -172,7 +172,11 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-# HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 18
+# 网站IP，发送邮件用
+SITE_URL = os.environ.get('SITE_URL')
 
 # CELERY
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/1'
@@ -182,6 +186,3 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379/1'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
 CELERY_TASK_SERIALIZER = 'json'
-
-# 网站IP，发送邮件用
-SITE_URL = os.environ.get('SITE_URL')
