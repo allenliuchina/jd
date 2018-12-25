@@ -62,7 +62,10 @@ def create_page_cache():
         for num in range(1, 4):
             list_id_num = 'list_%s_%s' % (good_type.id, num)
             h_list_id_num = 'h_list_%s_%s' % (good_type.id, num)
-            skus = paginator.page(num)
+            try:
+                skus = paginator.page(num)
+            except Exception as e
+                continue
             # conn.ltrim(list_id_num, 0, 0)
             conn.delete(list_id_num)
             for sku in skus:
